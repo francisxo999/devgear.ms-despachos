@@ -1,0 +1,33 @@
+services:
+  db-despachos:
+    image: mysql:8.0
+    container_name: mysql-despachos
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: despachos_db
+    volumes:
+      - db_despachos_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app-despachos:
+    build: .
+    container_name: devgear-ms-despachos-1
+    restart: always
+    ports:
+      - "8085:8085"
+    depends_on:
+      db-despachos:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-despachos:3306/despachos_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      RABBITMQ_HOST: ${RABBITMQ_HOST:?Define RABBITMQ_HOST en el archivo .env}
+
+volumes:
+  db_despachos_data:
